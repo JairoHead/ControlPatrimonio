@@ -19,21 +19,19 @@ COPY . /var/www/html
 WORKDIR /var/www/html
 
 # Instala las dependencias de Composer
-RUN composer install --no-dev
+RUN composer install --no-dev --no-interaction --prefer-dist
 
 # Copia la configuración de Nginx
-COPY nginx.conf /etc/nginx/sites-available/default
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Ejecuta las migraciones
 RUN php artisan migrate --force
 
-# Limpia la cache
+# Limpia la caché
 RUN php artisan optimize:clear
 
-# Inicia Nginx y PHP-FPM
-CMD ["nginx", "-g", "daemon off;", "&&", "php-fpm"]
-
+# Exponer puerto
 EXPOSE 80
-RUN service php8.2-fpm status
-RUN ls -l /run/php/
-RUN nginx -t
+
+# Comando de inicio corregido para ejecutar PHP-FPM y Nginx juntos
+CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
