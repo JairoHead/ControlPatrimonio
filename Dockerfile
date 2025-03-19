@@ -1,24 +1,28 @@
-FROM php:8.2-cli # O la versión de PHP que uses
+FROM php:8.2-fpm
 
-# Instala las extensiones necesarias
+# Instala las extensiones necesarias y Nginx
 RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
     libzip-dev \
-    && docker-php-ext-install zip
+    nginx \
+    && docker-php-ext-install zip pdo_mysql
 
 # Instala Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Copia los archivos de tu aplicación
-COPY . /app
+COPY . /var/www/html
 
 # Establece el directorio de trabajo
-WORKDIR /app
+WORKDIR /var/www/html
 
 # Instala las dependencias de Composer
 RUN composer install --no-dev
+
+# Copia la configuración de Nginx
+COPY nginx.conf /etc/nginx/sites-available/default
 
 # Ejecuta las migraciones
 RUN php artisan migrate --force
@@ -26,7 +30,7 @@ RUN php artisan migrate --force
 # Limpia la cache
 RUN php artisan optimize:clear
 
-# Establece el directorio de salida
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=3000"]
+# Inicia Nginx y PHP-FPM
+CMD ["nginx", "-g", "daemon off;", "&&", "php-fpm"]
 
-EXPOSE 3000
+EXPOSE 80
