@@ -34,3 +34,6 @@ RUN php artisan optimize:clear
 CMD ["nginx", "-g", "daemon off;", "&&", "php-fpm"]
 
 EXPOSE 80
+RUN service php8.2-fpm status
+RUN ls -l /run/php/
+RUN nginx -t
